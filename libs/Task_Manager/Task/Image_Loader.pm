@@ -13,7 +13,7 @@ use Homyaki::Gallery::Group_Processing;
 use Homyaki::Logger;
 
 use constant BASE_IMAGE_PATH      => '/home/alex/Share/Photo/';
-use constant DOWNLOAD_IMAGE_PATH  => &BASE_IMAGE_PATH . '/Tmp';
+use constant DOWNLOAD_IMAGE_PATH  => &BASE_IMAGE_PATH . '/0New';
 
 sub start {
 	my $class = shift;
@@ -37,10 +37,12 @@ sub start {
 			$index++;
 		}
 
-		mkdir(&DOWNLOAD_IMAGE_PATH . "/$params->{dir_name}$index");
+		my $directory_path = &DOWNLOAD_IMAGE_PATH . "/$params->{dir_name}$index";
+
+		mkdir($directory_path);
 
 		$devices->download_photo(
-			directory => &DOWNLOAD_IMAGE_PATH . "/$params->{dir_name}$index",
+			directory => $directory_path,
 			port      => $params->{device},
 		);
 
@@ -50,6 +52,8 @@ sub start {
 				images_path   => &BASE_IMAGE_PATH,
 			},
 		);
+
+		`sudo chown -R alex:alex $directory_path`;
 	}
 
 	$result->{task} = {

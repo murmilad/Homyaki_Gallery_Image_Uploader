@@ -135,10 +135,9 @@ sub get_camera_ports {
 	my $port_list = [];
 
 	my $ports_str =  `sudo gphoto2  --auto-detect`;
-	Homyaki::Logger::print_log('USB = ' . $ports_str);
 
 	foreach my $port_str (split("\n", $ports_str)) {
-		if ($port_str =~ /(disk|usb|serial):(.+)/){
+		if ($port_str =~ /(disk|usb|serial):(.+[^\s])\s*$/){
 			my $port_name = "$1:$2";
 			
 			push(@{$port_list}, {
