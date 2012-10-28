@@ -1,0 +1,8 @@
+<menue>
+	<menue name="Photo Gallery">
+		<menue name="Load images from devices" interface="task" form="image_loader">
+			<permission>reader</permission>
+			<permission>guest</permission>
+		</menue>
+	</menue>
+</menue>
