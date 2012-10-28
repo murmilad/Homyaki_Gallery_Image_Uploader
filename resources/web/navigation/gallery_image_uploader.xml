@@ -3,6 +3,7 @@
 		<menue name="Load images from devices" interface="task" form="image_loader">
 			<permission>reader</permission>
 			<permission>guest</permission>
+			<ip>172.16.*</ip>
 		</menue>
 	</menue>
 </menue>
