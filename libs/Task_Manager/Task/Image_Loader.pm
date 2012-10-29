@@ -4,6 +4,9 @@ use strict;
 
 use File::stat;
 
+use Homyaki::Task_Manager;
+use Homyaki::Task_Manager::DB::Task_Type;
+
 use Homyaki::Task_Manager::DB::Task;
 use Homyaki::Task_Manager::DB::Constants;
 use Homyaki::System::USB;
@@ -45,15 +48,21 @@ sub start {
 			directory => $directory_path,
 			port      => $params->{device},
 		);
+	
+		`sudo chown -R alex:alex $directory_path`;
 
-		Homyaki::Gallery::Group_Processing->process(
-			handler => 'Homyaki::Processor::Gallery_Unic_Name',
-			params  => {
-				images_path   => &BASE_IMAGE_PATH,
-			},
+		my @task_types = Homyaki::Task_Manager::DB::Task_Type->search(
+			handler => 'Homyaki::Task_Manager::Task::Auto_Rename'
 		);
 
-		`sudo chown -R alex:alex $directory_path`;
+		if (scalar(@task_types) > 0) {
+
+			my $task = Homyaki::Task_Manager->create_task(
+				task_type_id => $task_types[0]->id(),
+				modal        => 1,
+			);
+		}
+
 	}
 
 	$result->{task} = {
