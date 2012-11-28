@@ -9,6 +9,8 @@ use Homyaki::Task_Manager::DB::Task_Type;
 
 use Homyaki::Task_Manager::DB::Task;
 use Homyaki::Task_Manager::DB::Constants;
+
+use Homyaki::GPS::Log;
 use Homyaki::System::USB;
 
 use Homyaki::Gallery::Group_Processing;
@@ -16,6 +18,7 @@ use Homyaki::Gallery::Group_Processing;
 use Homyaki::Logger;
 
 use constant BASE_IMAGE_PATH      => '/home/alex/Share/Photo/';
+use constant GARMIN_GPX_PATH      => '/media/GARMIN/Garmin/GPX/';
 use constant DOWNLOAD_IMAGE_PATH  => &BASE_IMAGE_PATH . '/0New';
 
 sub start {
@@ -50,6 +53,10 @@ sub start {
 		);
 	
 		`sudo chown -R alex:alex $directory_path`;
+
+		if (-d &GARMIN_GPX_PATH) {
+			Homyaki::GPS::Log::update_images(&GARMIN_GPX_PATH, $directory_path);
+		}
 
 		my @task_types = Homyaki::Task_Manager::DB::Task_Type->search(
 			handler => 'Homyaki::Task_Manager::Task::Auto_Rename'
