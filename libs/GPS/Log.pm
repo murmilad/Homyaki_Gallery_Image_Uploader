@@ -300,7 +300,7 @@ sub load_gpx_dir {
 	} elsif (-d $current_path) {
 		opendir(my $dh, $current_path);
 		foreach my $sub_path (grep { !/^\.\./ && !/^\./ } readdir($dh)){
-			load_gpx_dir($current_path, $gpx_data);
+			load_gpx_dir($current_path . '/' . $sub_path, $gpx_data);
 		}
 	}
 }
