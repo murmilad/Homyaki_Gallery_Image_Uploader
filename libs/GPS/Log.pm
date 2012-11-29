@@ -7,6 +7,7 @@ use File::Find;
 use Imager;
 use DateTime;
 use POSIX qw(floor);
+use Homyaki::Logger;
 
 use constant EXIF_GPS_DATA_MAP => {
 		GPSLatitude         => 'GPS',
@@ -73,12 +74,16 @@ sub create_time_gps_hash {
 				$content_xml->{trk}->{'the_first'}->{trkseg} = $content_xml->{trk}->{trkseg};
 			}
 			foreach my $track (keys %{$content_xml->{trk}}){
-				foreach my $track_point (keys %{$content_xml->{trk}->{$track}->{trkseg}->{trkpt}}){
-					my $time_str  = $content_xml->{trk}->{$track}->{trkseg}->{trkpt}->{$track_point}->{'time'};
-					my $ele_str   = $content_xml->{trk}->{$track}->{trkseg}->{trkpt}->{$track_point}->{'ele'};
-					my $lat_str   = $content_xml->{trk}->{$track}->{trkseg}->{trkpt}->{$track_point}->{'lat'};
-					my $lon_str   = $content_xml->{trk}->{$track}->{trkseg}->{trkpt}->{$track_point}->{'lon'};
-					my $speed_str = $content_xml->{trk}->{$track}->{trkseg}->{trkpt}->{$track_point}->{'speed'};
+
+
+				foreach my $track_seg (ref($content_xml->{trk}->{$track}->{trkseg}) eq 'HASH' ? ($content_xml->{trk}->{$track}->{trkseg}) : @{$content_xml->{trk}->{$track}->{trkseg}}){
+				foreach my $track_point (ref($track_seg->{trkpt}) eq 'HASH' ? ($track_seg->{trkpt}) : @{$track_seg->{trkpt}}){
+					my $time_str  = $track_point->{'time'};
+					my $ele_str   = $track_point->{'ele'};
+					my $lat_str   = $track_point->{'lat'};
+					my $lon_str   = $track_point->{'lon'};
+					my $speed_str = $track_point->{'speed'};
+#					Homyaki::Logger::print_log('Track = ' . Dumper($track_point));
 
 					#2010-05-07T16:29:02Z
 					if ($time_str =~ /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{3})?Z/) {
@@ -100,6 +105,7 @@ sub create_time_gps_hash {
 						};
 					}
 				}
+			}
 			}
 			my $prev_time_epoch = 0;
 			foreach my $time_epoch (sort {$a <=> $b} keys %{$time_gps_hash}){
