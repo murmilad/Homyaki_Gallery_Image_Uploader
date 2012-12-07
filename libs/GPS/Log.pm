@@ -22,6 +22,10 @@ use constant EXIF_GPS_DATA_MAP => {
 		GPSDateTime         => 'XMP'
 };
 
+use constant LOCAL_TIME_SHIFT => 3;
+
+use constant STAY_PERIOD => 0;
+
 sub dd2dms {
 	my $dd = shift;
 	# print "$dd\n";
@@ -43,9 +47,48 @@ sub dt_to_DateTimeOriginal($){
 	return $DateTimeOriginal;
 }
 
+sub improve_time_gps_hash {
+	my $time_gps_hash = shift;
+
+
+	my $prev_time_epoch = 0;
+	foreach my $time_epoch (sort {$a <=> $b} keys %{$time_gps_hash}){
+		$prev_time_epoch = $time_epoch-1 unless $prev_time_epoch;
+
+		if ($time_epoch != $prev_time_epoch + 1) {
+			my $ele_str   = $time_gps_hash->{$prev_time_epoch}->{ele};
+			my $lat_str   = $time_gps_hash->{$prev_time_epoch}->{lat};
+			my $lon_str   = $time_gps_hash->{$prev_time_epoch}->{lon};
+			my $speed_str = $time_gps_hash->{$prev_time_epoch}->{speed};
+			my $dt_str    = $time_gps_hash->{$prev_time_epoch}->{dt};
+			my $big_range_time_epoch = 0;
+			if (&STAY_PERIOD && $time_epoch - $prev_time_epoch > 86400*&STAY_PERIOD){
+				$big_range_time_epoch = $time_epoch;
+				$time_epoch = $prev_time_epoch + 86400*&STAY_PERIOD;
+			}
+			for (1; $time_epoch != $prev_time_epoch; $prev_time_epoch++){
+				$time_gps_hash->{$prev_time_epoch}->{ele}   = $ele_str;
+				$time_gps_hash->{$prev_time_epoch}->{lat}   = $lat_str;
+				$time_gps_hash->{$prev_time_epoch}->{lon}   = $lon_str;
+				$time_gps_hash->{$prev_time_epoch}->{speed} = $speed_str;
+				$time_gps_hash->{$prev_time_epoch}->{dt}    = $dt_str;
+			}
+			if ($big_range_time_epoch) {
+				$time_epoch = $big_range_time_epoch;
+			}
+			$prev_time_epoch = $time_epoch;
+
+		}
+	}
+
+	return $time_gps_hash;
+}
+
 sub create_time_gps_hash {
 	my $gpx_path      = shift;
 	my $time_gps_hash = shift;
+	my $time_shift    = shift;
+
 
 	my $str_gpx;
 
@@ -94,9 +137,10 @@ sub create_time_gps_hash {
 							hour   => $4,
 							minute => $5,
 							second => $6,
-						)->add( hours => 3 );
+						)->add( hours => &LOCAL_TIME_SHIFT );
 
-						$time_gps_hash->{$time->epoch()} = {
+
+						$time_gps_hash->{$time->epoch() + $time_shift} = {
 							ele   => $ele_str,
 							lat   => $lat_str,
 							lon   => $lon_str,
@@ -106,35 +150,6 @@ sub create_time_gps_hash {
 					}
 				}
 			}
-			}
-			my $prev_time_epoch = 0;
-			foreach my $time_epoch (sort {$a <=> $b} keys %{$time_gps_hash}){
-				$prev_time_epoch = $time_epoch-1 unless $prev_time_epoch;
-
-				if ($time_epoch != $prev_time_epoch + 1) {
-					my $ele_str   = $time_gps_hash->{$prev_time_epoch}->{ele};
-					my $lat_str   = $time_gps_hash->{$prev_time_epoch}->{lat};
-					my $lon_str   = $time_gps_hash->{$prev_time_epoch}->{lon};
-					my $speed_str = $time_gps_hash->{$prev_time_epoch}->{speed};
-					my $dt_str    = $time_gps_hash->{$prev_time_epoch}->{dt};
-					my $big_range_time_epoch = 0;
-					if ($time_epoch - $prev_time_epoch > 86400*2){
-						$big_range_time_epoch = $time_epoch;
-						$time_epoch = $prev_time_epoch + 86400*2;
-					}
-					for (1; $time_epoch != $prev_time_epoch; $prev_time_epoch++){
-						$time_gps_hash->{$prev_time_epoch}->{ele}   = $ele_str;
-						$time_gps_hash->{$prev_time_epoch}->{lat}   = $lat_str;
-						$time_gps_hash->{$prev_time_epoch}->{lon}   = $lon_str;
-						$time_gps_hash->{$prev_time_epoch}->{speed} = $speed_str;
-						$time_gps_hash->{$prev_time_epoch}->{dt}    = $dt_str;
-					}
-					if ($big_range_time_epoch) {
-						$time_epoch = $big_range_time_epoch;
-					}
-					$prev_time_epoch = $time_epoch;
-
-				}
 			}
 		}
 	} else {
@@ -297,16 +312,18 @@ sub get_tag_data {
 		return $_->[1] if $_->[0] eq $tag_name
 	}
 }
+
 sub load_gpx_dir {
-	my $current_path = shift;
-	my $gpx_data     = shift;
+	my $current_path   = shift;
+	my $gpx_data       = shift;
+	my $time_shift     = shift;
 
 	if (-f $current_path) {
-		create_time_gps_hash($current_path, $gpx_data);
+		create_time_gps_hash($current_path, $gpx_data, $time_shift);
 	} elsif (-d $current_path) {
 		opendir(my $dh, $current_path);
 		foreach my $sub_path (grep { !/^\.\./ && !/^\./ } readdir($dh)){
-			load_gpx_dir($current_path . '/' . $sub_path, $gpx_data);
+			load_gpx_dir($current_path . '/' . $sub_path, $gpx_data, $time_shift);
 		}
 	}
 }
@@ -314,10 +331,13 @@ sub load_gpx_dir {
 sub update_images{
 	my $gpx_data_path = shift;
 	my $images_path   = shift;
+	my $time_shift    = shift;
 
 	my $gpx_data = {}; 
 
-	load_gpx_dir($gpx_data_path, $gpx_data);
+	load_gpx_dir($gpx_data_path, $gpx_data, $time_shift);
+	improve_time_gps_hash($gpx_data);
+
 
 	if (scalar(keys(%{$gpx_data})) > 0) {
 		my $images_list = get_images_list($images_path, '\.jpg$|\.nef$');

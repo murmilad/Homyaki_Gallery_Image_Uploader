@@ -15,13 +15,17 @@ use FreezeThaw qw(freeze thaw);
 use Homyaki::Task_Manager::DB::Task_Type;
 use Homyaki::Task_Manager::DB::Constants;
 
+use Homyaki::GPS::Log;
 use Homyaki::System::USB;
+use Homyaki::Task_Manager::Task::Image_Loader;
 
 use Homyaki::Interface::Task_Manager;
 use base 'Homyaki::Interface::Task_Manager';
 
+
 use constant TASK_HANDLER => 'Homyaki::Task_Manager::Task::Image_Loader';
 use constant PARAMS_MAP  => {
+	time_shift   => {name => 'Time shift for GPS (sec)'            , required => 0, type  => &INPUT_TYPE_NUMBER},
 	name         => {name => 'Name of photo directory'             , required => 1, type  => &INPUT_TYPE_TEXT},
 	device       => {name => 'Device'                              , required => 1, type  => &INPUT_TYPE_LIST},
 };
@@ -58,6 +62,19 @@ sub get_tag {
 	);
 
 	if (scalar(@{$params->{device_list}})) {
+
+		my $gps_path = Homyaki::Task_Manager::Task::Image_Loader->GARMIN_GPX_PATH;
+
+		if (`sudo ls $gps_path`) {
+			$form->add_form_element(
+				type   => &INPUT_TYPE_TEXT,
+				name   => 'time_shift',
+				header => 'Time shift for GPS (sec)',
+				value  => $params->{time_shift},
+				error  => $errors->{time_shift},
+			);
+		}
+
 		$form->add_form_element(
 			type   => &INPUT_TYPE_TEXT,
 			name   => 'name',
@@ -163,8 +180,9 @@ sub set_params {
 				ip_address   => $params->{ip_address},
 				name         => $params->{name},
 				params => {
-					device   => $params->{device},
-					dir_name => $params->{name},
+					time_shift => $params->{time_shift},
+					device     => $params->{device},
+					dir_name   => $params->{name},
 				}
 			);
 
