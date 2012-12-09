@@ -26,8 +26,8 @@ use base 'Homyaki::Interface::Task_Manager';
 use constant TASK_HANDLER => 'Homyaki::Task_Manager::Task::Image_Loader';
 use constant PARAMS_MAP  => {
 	time_shift   => {name => 'Time shift for GPS (sec)'            , required => 0, type  => &INPUT_TYPE_NUMBER},
-	name         => {name => 'Name of photo directory'             , required => 1, type  => &INPUT_TYPE_TEXT},
-	device       => {name => 'Device'                              , required => 1, type  => &INPUT_TYPE_LIST},
+	name         => {name => 'Name of photo directory'             , required => 0, type  => &INPUT_TYPE_TEXT},
+	device       => {name => 'Device'                              , required => 0, type  => &INPUT_TYPE_LIST},
 };
 
 sub get_tag {
@@ -63,18 +63,6 @@ sub get_tag {
 
 	if (scalar(@{$params->{device_list}})) {
 
-		my $gps_path = Homyaki::Task_Manager::Task::Image_Loader->GARMIN_GPX_PATH;
-
-		if (`sudo ls $gps_path`) {
-			$form->add_form_element(
-				type   => &INPUT_TYPE_TEXT,
-				name   => 'time_shift',
-				header => 'Time shift for GPS (sec)',
-				value  => $params->{time_shift},
-				error  => $errors->{time_shift},
-			);
-		}
-
 		$form->add_form_element(
 			type   => &INPUT_TYPE_TEXT,
 			name   => 'name',
@@ -97,6 +85,19 @@ sub get_tag {
         	value  => $params->{result},
 		);
 	
+	}
+
+	if (is_garmin_connected() && !$params->{started_list}) {
+		$form->add_form_element(
+			type   => &INPUT_TYPE_TEXT,
+			name   => 'time_shift',
+			header => 'Time shift for GPS (sec)',
+			value  => $params->{time_shift},
+			error  => $errors->{time_shift},
+		);
+	}
+
+	if (scalar(@{$params->{device_list}}) || (is_garmin_connected() && !$params->{started_list})) {
 		$form->add_form_element(
 			type   => &INPUT_TYPE_SUBMIT,
 			name   => 'submit_button',
@@ -113,6 +114,12 @@ sub get_tag {
 		root => $body_tag->{root},
 		body => $form,
 	};
+}
+
+sub is_garmin_connected {
+	my $gps_path = Homyaki::Task_Manager::Task::Image_Loader->GARMIN_GPX_PATH;
+
+	return `sudo ls $gps_path` ? 1 : 0;
 }
 
 sub get_already_active_tasks{
@@ -166,7 +173,7 @@ sub set_params {
 
 	$params->{task_handler} = &TASK_HANDLER;
 
-	if ($params->{device}) {
+	if ($params->{device} || is_garmin_connected()) {
 
 		my @task_types = Homyaki::Task_Manager::DB::Task_Type->search(
 			handler => &TASK_HANDLER
@@ -174,8 +181,7 @@ sub set_params {
 
 		if (scalar(@task_types) > 0 && $params->{ip_address} =~ /^172\.16\./) {
 
-			my $task = Homyaki::Task_Manager
-->create_task(
+			my $task = Homyaki::Task_Manager->create_task(
 				task_type_id => $task_types[0]->id(),
 				ip_address   => $params->{ip_address},
 				name         => $params->{name},

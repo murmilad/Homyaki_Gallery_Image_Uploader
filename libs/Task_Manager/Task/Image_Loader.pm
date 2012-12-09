@@ -35,6 +35,7 @@ sub start {
 	$devices->load_devices();
 
 	my $ports = $devices->get_camera_ports();
+	my $directory_path;
 
 	if (scalar(@{$ports}) > 0 && $params->{device}) {
 	
@@ -55,9 +56,14 @@ sub start {
 		`sudo chown -R alex:alex $directory_path`;
 		`sudo chmod -R 775 $directory_path`;
 
-		if (-d &GARMIN_GPX_PATH) {
-			Homyaki::GPS::Log::update_images(&GARMIN_GPX_PATH, $directory_path, $params->{time_shift});
-		}
+
+	}
+
+	if (-d &GARMIN_GPX_PATH) {
+		Homyaki::GPS::Log::update_images(&GARMIN_GPX_PATH, $directory_path || &DOWNLOAD_IMAGE_PATH, $params->{time_shift});
+	}
+
+	if (scalar(@{$ports}) > 0 && $params->{device}) {
 
 		my @task_types = Homyaki::Task_Manager::DB::Task_Type->search(
 			handler => 'Homyaki::Task_Manager::Task::Auto_Rename'
@@ -70,7 +76,6 @@ sub start {
 				modal        => 1,
 			);
 		}
-
 	}
 
 	$result->{task} = {
