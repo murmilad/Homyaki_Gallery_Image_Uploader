@@ -3,6 +3,7 @@ package Homyaki::Task_Manager::Task::Image_Loader;
 use strict;
 
 use File::stat;
+use DateTime; 
 
 use Homyaki::Task_Manager;
 use Homyaki::Task_Manager::DB::Task_Type;
@@ -40,11 +41,15 @@ sub start {
 	if (scalar(@{$ports}) > 0 && $params->{device}) {
 	
 		my $index;
-		while (-d &DOWNLOAD_IMAGE_PATH . "/$params->{dir_name}$index"){
+
+		my $now = DateTime->now();
+		my $dir_name = $now->ymd("_") . "__" . $now->hms("_") . "_" . $params->{dir_name};
+
+		while (-d &DOWNLOAD_IMAGE_PATH . "/${dir_name}$index"){
 			$index++;
 		}
 
-		my $directory_path = &DOWNLOAD_IMAGE_PATH . "/$params->{dir_name}$index";
+		my $directory_path = &DOWNLOAD_IMAGE_PATH . "/${dir_name}$index";
 
 		mkdir($directory_path);
 
