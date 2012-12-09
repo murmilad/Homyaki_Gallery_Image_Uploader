@@ -53,6 +53,7 @@ sub start {
 		);
 	
 		`sudo chown -R alex:alex $directory_path`;
+		`sudo chmod -R 775 $directory_path`;
 
 		if (-d &GARMIN_GPX_PATH) {
 			Homyaki::GPS::Log::update_images(&GARMIN_GPX_PATH, $directory_path, $params->{time_shift});
