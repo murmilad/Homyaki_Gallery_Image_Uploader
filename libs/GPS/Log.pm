@@ -24,7 +24,8 @@ use constant EXIF_GPS_DATA_MAP => {
 
 use constant LOCAL_TIME_SHIFT => 3;
 
-use constant STAY_PERIOD => 0;
+use constant STAY_PERIOD_HOUR         => 6;
+use constant MAX_INTARVAL_PERIOD_HOUR => 7;
 
 sub dd2dms {
 	my $dd = shift;
@@ -62,17 +63,21 @@ sub improve_time_gps_hash {
 			my $speed_str = $time_gps_hash->{$prev_time_epoch}->{speed};
 			my $dt_str    = $time_gps_hash->{$prev_time_epoch}->{dt};
 			my $big_range_time_epoch = 0;
-			if (&STAY_PERIOD && $time_epoch - $prev_time_epoch > 86400*&STAY_PERIOD){
+			if (&STAY_PERIOD_HOUR && $time_epoch - $prev_time_epoch > &STAY_PERIOD_HOUR * 60 * 60){
 				$big_range_time_epoch = $time_epoch;
-				$time_epoch = $prev_time_epoch + 86400*&STAY_PERIOD;
+				$time_epoch = $prev_time_epoch + &STAY_PERIOD_HOUR * 60 * 60;
 			}
-			for (1; $time_epoch != $prev_time_epoch; $prev_time_epoch++){
-				$time_gps_hash->{$prev_time_epoch}->{ele}   = $ele_str;
-				$time_gps_hash->{$prev_time_epoch}->{lat}   = $lat_str;
-				$time_gps_hash->{$prev_time_epoch}->{lon}   = $lon_str;
-				$time_gps_hash->{$prev_time_epoch}->{speed} = $speed_str;
-				$time_gps_hash->{$prev_time_epoch}->{dt}    = $dt_str;
+
+			if ($time_epoch - $prev_time_epoch < &MAX_INTARVAL_PERIOD_HOUR * 60 * 60) {
+				for (1; $time_epoch != $prev_time_epoch; $prev_time_epoch++){
+					$time_gps_hash->{$prev_time_epoch}->{ele}   = $ele_str;
+					$time_gps_hash->{$prev_time_epoch}->{lat}   = $lat_str;
+					$time_gps_hash->{$prev_time_epoch}->{lon}   = $lon_str;
+					$time_gps_hash->{$prev_time_epoch}->{speed} = $speed_str;
+					$time_gps_hash->{$prev_time_epoch}->{dt}    = $dt_str;
+				}
 			}
+
 			if ($big_range_time_epoch) {
 				$time_epoch = $big_range_time_epoch;
 			}
