@@ -240,7 +240,6 @@ sub get_params {
 	my $device_list = [];
 	my $started_list;
 
-	Homyaki::Logger::print_log('Image_Loader = ' . Dumper($ports));
 	foreach my $port (@{$ports}) {
 		if ($started_ports->{$port->{port}}) {
 			$started_list .= "$port->{port} $port->{name} (started) <br>";
@@ -251,6 +250,8 @@ sub get_params {
 
 	$result->{device_list}  = $device_list;
 	$result->{started_list} = $started_list;
+	$result->{started_list} = $started_list;
+	$result->{task_handler} = ['Homyaki::Task_Manager::Task::Image_Loader', 'Homyaki::Task_Manager::Task::Auto_Rename'];
 
 	my $parrent_result = $self->SUPER::get_params(
 		params      => $params,
