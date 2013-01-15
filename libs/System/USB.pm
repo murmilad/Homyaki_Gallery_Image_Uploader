@@ -170,19 +170,19 @@ sub download_photo {
 
 	my $directory    = $h{directory};
 	my $port         = $h{port};
+	Homyaki::Logger::print_log("USBport: $port");	
 
-	my $device;
-	if ($port =~ /^usb:(\d{3}),(\d{3})?/){
-		my $bus    = $1 || '\d+';
-		$device    = $2 || '\d+';
+	if ($port =~ /^usb:((\d{3}),(\d{3}))?/){
+		my $bus    = $2 || '\d+';
+		my $device = $3 || '\d+';
 		my $processes = `lsof | grep /dev/bus/usb`;
-		
 		foreach my $process_str (split("\n", $processes)){
 			if ($process_str =~ /[\w-]+\s+(\d+)\s+.*\/dev\/bus\/usb\/$bus\/$device/){
 
 				#gvfsd-gph 20535       alex    7r      CHR    189,147        0t0     261134 /dev/bus/usb/002/020
 				#lsof | grep usb
 
+				Homyaki::Logger::print_log("sudo kill -9 $1");	
 				`sudo kill -9 $1`;
 			}
 		}
