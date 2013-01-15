@@ -237,6 +237,8 @@ sub get_params {
 
 	my $ports = $devices->get_camera_ports();
 
+	Homyaki::Logger::print_log(Dumper($ports));
+
 	my $device_list = [];
 	my $started_list;
 

@@ -1,3 +1,4 @@
+package Homyaki::System::USB;
 #
 #===============================================================================
 #
@@ -14,7 +15,6 @@
 #      CREATED: 23.10.2012 22:27:06
 #     REVISION: ---
 #===============================================================================
-package Homyaki::System::USB;
 
 use strict;
 use warnings;
@@ -147,6 +147,19 @@ sub get_camera_ports {
 		}
 	}
 
+	if (scalar(@{$port_list}) == 0){
+		foreach my $port_str (split("\n", $ports_str)) {
+			if ($port_str =~ /(disk|usb|serial):\s*$/){
+				my $port_name = "$1:";
+				push(@{$port_list}, {
+					name => $port_name,
+					port => $port_name,
+				});
+			}
+
+		}
+	}
+
 	return $port_list;
 }
 
@@ -158,10 +171,10 @@ sub download_photo {
 	my $directory    = $h{directory};
 	my $port         = $h{port};
 
-
-	if ($port =~ /^usb:(\d{3}),(\d{3})/){
-		my $bus    = $1;
-		my $device = $2;
+	my $device;
+	if ($port =~ /^usb:(\d{3}),(\d{3})?/){
+		my $bus    = $1 || '\d+';
+		$device    = $2 || '\d+';
 		my $processes = `lsof | grep /dev/bus/usb`;
 		
 		foreach my $process_str (split("\n", $processes)){
