@@ -123,38 +123,39 @@ sub create_time_gps_hash {
 			}
 			foreach my $track (keys %{$content_xml->{trk}}){
 
+				if (ref($content_xml->{trk}->{$track}) eq 'HASH'){
+					foreach my $track_seg (ref($content_xml->{trk}->{$track}->{trkseg}) eq 'HASH' ? ($content_xml->{trk}->{$track}->{trkseg}) : @{$content_xml->{trk}->{$track}->{trkseg}}){
+					foreach my $track_point (ref($track_seg->{trkpt}) eq 'HASH' ? ($track_seg->{trkpt}) : @{$track_seg->{trkpt}}){
+						my $time_str  = $track_point->{'time'};
+						my $ele_str   = $track_point->{'ele'};
+						my $lat_str   = $track_point->{'lat'};
+						my $lon_str   = $track_point->{'lon'};
+						my $speed_str = $track_point->{'speed'};
+#						Homyaki::Logger::print_log('Track = ' . Dumper($track_point));
 
-				foreach my $track_seg (ref($content_xml->{trk}->{$track}->{trkseg}) eq 'HASH' ? ($content_xml->{trk}->{$track}->{trkseg}) : @{$content_xml->{trk}->{$track}->{trkseg}}){
-				foreach my $track_point (ref($track_seg->{trkpt}) eq 'HASH' ? ($track_seg->{trkpt}) : @{$track_seg->{trkpt}}){
-					my $time_str  = $track_point->{'time'};
-					my $ele_str   = $track_point->{'ele'};
-					my $lat_str   = $track_point->{'lat'};
-					my $lon_str   = $track_point->{'lon'};
-					my $speed_str = $track_point->{'speed'};
-#					Homyaki::Logger::print_log('Track = ' . Dumper($track_point));
-
-					#2010-05-07T16:29:02Z
-					if ($time_str =~ /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{3})?Z/) {
-						$time->set(
-							year   => $1,
-							month  => $2,
-							day    => $3,
-							hour   => $4,
-							minute => $5,
-							second => $6,
-						)->add( hours => &LOCAL_TIME_SHIFT );
+						#2010-05-07T16:29:02Z
+						if ($time_str =~ /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{3})?Z/) {
+							$time->set(
+								year   => $1,
+								month  => $2,
+								day    => $3,
+								hour   => $4,
+								minute => $5,
+								second => $6,
+							)->add( hours => &LOCAL_TIME_SHIFT );
 
 
-						$time_gps_hash->{$time->epoch() + $time_shift} = {
-							ele   => $ele_str,
-							lat   => $lat_str,
-							lon   => $lon_str,
-							speed => $speed_str,
-							dt    => $time_str
-						};
+							$time_gps_hash->{$time->epoch() + $time_shift} = {
+								ele   => $ele_str,
+								lat   => $lat_str,
+								lon   => $lon_str,
+								speed => $speed_str,
+								dt    => $time_str
+							};
+						}
 					}
 				}
-			}
+				}
 			}
 		}
 	} else {

@@ -188,7 +188,7 @@ sub download_photo {
 		}
 	}
 
-	return `cd $directory; sudo gphoto2 --force-overwrite --get-all-files --port '$port';`;
+	return `cd $directory; sudo gphoto2 --filename=\%f_\%n.\%C --get-all-files --port '$port';`;
 }
 
 1;
