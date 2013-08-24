@@ -188,7 +188,13 @@ sub download_photo {
 		}
 	}
 
-	return `cd $directory; sudo gphoto2 --filename=\%f_\%n.\%C --get-all-files --port '$port';`;
+	my $files_count = `gphoto2 -L --port 'disk:/media/NIKON D80' | tail -n 1 | awk '{print $1}'`;
+	$files_count =~ s/\D//g;
+
+	for (my $i = 1; $i <= $files_count; $i++){
+		my $i_string = sprintf("%05d", $i);
+		`cd $directory; sudo gphoto2 --filename=\%f_$i_string.\%C --get-file $i-$i --port '$port';`;
+	}
 }
 
 1;
