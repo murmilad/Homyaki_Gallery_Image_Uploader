@@ -193,7 +193,7 @@ sub download_photo {
 
 	for (my $i = 1; $i <= $files_count; $i++){
 		my $i_string = sprintf("%05d", $i);
-		`cd $directory; sudo gphoto2 --filename=\%f_$i_string.\%C --get-file $i-$i --port '$port';`;
+		`cd $directory; sudo gphoto2 --filename=${i_string}_\%f.\%C --get-file $i-$i --port '$port';`;
 	}
 }
 1;
