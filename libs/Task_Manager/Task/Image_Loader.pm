@@ -12,7 +12,8 @@ use Homyaki::Task_Manager::DB::Task;
 use Homyaki::Task_Manager::DB::Constants;
 
 use Homyaki::GPS::Log;
-use Homyaki::System::USB;
+
+use Homyaki::Task_Manager::Task::Image_Loader::Loader_Factory;
 
 use Homyaki::Gallery::Group_Processing;
 
@@ -31,14 +32,33 @@ sub start {
 
 	my $result = {};
 
+	my $loaders = [];
+	my $sources = {};
 	
-	my $devices = Homyaki::System::USB->new();
-	$devices->load_devices();
+	foreach my $loader_name (@{&LOADERS_ORDER}) {
+		my $loader = Homyaki::Task_Manager::Task::Image_Loader::Loader_Factory->cteate_loader(
+			loader_name      => $loader_name,
+			progress_handler => sub {
+				my $current_percent = shift;
 
-	my $ports = $devices->get_camera_ports();
+				$task->set('progress', "uploading: $current_percent");
+				$task->update();
+			},
+		);
+		if ($loader) {
+			push(@{$loaders}, $loader);
+
+
+			my $current_sources =  $loader->get_sources();
+
+
+			map {$sources->{$_->{source}} = {source => $_, loader => $loader}} @{$current_sources};
+		}
+	}
+
 	my $directory_path;
 
-	if (scalar(@{$ports}) > 0 && $params->{device}) {
+	if ($params->{device} &&  $sources->{$params->{device}}->{loader}) {
 	
 		my $index;
 
@@ -52,11 +72,18 @@ sub start {
 		my $directory_path = &DOWNLOAD_IMAGE_PATH . "/${dir_name}$index";
 
 		mkdir($directory_path);
+		my $loader = $sources->{$params->{device}}->{loader};
 
-		$devices->download_photo(
-			directory => $directory_path,
-			port      => $params->{device},
-		);
+		if ($loader) {
+			if ($loader->is_ready_for_load) {
+				$loader->download(
+					directory        => $directory_path,
+					source           => $params->{device},
+				);
+			} else {
+				$params->{error} = $loader->get_errors();
+			}
+		}
 	
 		`sudo chown -R alex:alex $directory_path`;
 		`sudo chmod -R 775 $directory_path`;
@@ -68,7 +95,7 @@ sub start {
 		Homyaki::GPS::Log::update_images(&GARMIN_GPX_PATH, $directory_path || &DOWNLOAD_IMAGE_PATH, $params->{time_shift});
 	}
 
-	if (scalar(@{$ports}) > 0 && $params->{device}) {
+	if ($params->{device} &&  $sources->{$params->{device}}->{loader}) {
 
 		my @task_types = Homyaki::Task_Manager::DB::Task_Type->search(
 			handler => 'Homyaki::Task_Manager::Task::Auto_Rename'

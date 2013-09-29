@@ -188,7 +188,7 @@ sub download_photo {
 		}
 	}
 
-	my $files_count = `gphoto2 -L --port 'disk:/media/NIKON D80' | tail -n 1 | awk '{print \$1}'`;
+	my $files_count = `gphoto2 -L --port '$port' | tail -n 1 | awk '{print \$1}'`;
 	$files_count =~ s/\D//g;
 
 	for (my $i = 1; $i <= $files_count; $i++){
