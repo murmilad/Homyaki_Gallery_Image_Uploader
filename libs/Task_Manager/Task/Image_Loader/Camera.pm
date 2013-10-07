@@ -45,8 +45,22 @@ sub new {
 
 sub is_ready_for_load {
 	my $self = shift;
+	my $port = shift;
 
-	return 1;
+	my $sizes = `gphoto2 --list-files --port "$port" | awk '{print \$4}'`;
+	my $size; $size += $_ for split("\n", $sizes);
+	my $free_space = `df --block-size=1K /home/ | awk '{print \$4}' | tail -1`;
+
+	
+
+	my $not_enough = $size + 500000 - $free_space;
+
+	if ($not_enough > 0) {
+		$self->{error} = "Not enough free space $not_enough Kb";
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 sub get_errors {
