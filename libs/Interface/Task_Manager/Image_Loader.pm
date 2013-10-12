@@ -16,7 +16,7 @@ use Homyaki::Task_Manager::DB::Task_Type;
 use Homyaki::Task_Manager::DB::Constants;
 
 use Homyaki::GPS::Log;
-use Homyaki::System::USB;
+use Homyaki::Task_Manager::Task::Image_Loader::Loader_Factory;
 use Homyaki::Task_Manager::Task::Image_Loader;
 
 use Homyaki::Interface::Task_Manager;
@@ -232,20 +232,26 @@ sub get_params {
 		$started_ports->{$task->{params}->{device}} = 1;
 	}
 
-	my $devices = Homyaki::System::USB->new();
-
-	my $ports = $devices->get_camera_ports();
-
-	Homyaki::Logger::print_log(Dumper($ports));
+	my $sources = [];
+	foreach my $loader_name (@{&LOADERS_ORDER}) {
+		my $loader = Homyaki::Task_Manager::Task::Image_Loader::Loader_Factory->cteate_loader(
+			loader_name      => $loader_name,
+		);
+		if ($loader) {
+			my $current_sources =  $loader->get_sources();
+			push(@{$sources}, (@{$current_sources}));
+		}
+	}
+	Homyaki::Logger::print_log(Dumper($sources));
 
 	my $device_list = [];
 	my $started_list;
 
-	foreach my $port (@{$ports}) {
-		if ($started_ports->{$port->{port}}) {
-			$started_list .= "$port->{port} $port->{name} (started) <br>";
+	foreach my $source (@{$sources}) {
+		if ($started_ports->{$source->{source}}) {
+			$started_list .= "$source->{source} $source->{name} $source->{loader} (started) <br>";
 		} else {
-			push (@{$device_list}, {name => $port->{name}, id => $port->{port}});
+			push (@{$device_list}, {name => $source->{name}, id => $source->{source}});
 		}
 	}
 

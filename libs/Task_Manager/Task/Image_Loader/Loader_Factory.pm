@@ -9,13 +9,13 @@ use Data::Dumper;
 use base 'Homyaki::Factory';
 
 use constant LOADERS_ORDER => [
-#	'hdd_hyperdrive',
+	'hyperdrive',
 	'camera',
 ];
 
 use constant LOADER_HANDLER_MAP   => {
-	camera         => 'Homyaki::Task_Manager::Task::Image_Loader::Camera',
-#	hdd_hyperdrive => 'Homyaki::Task_Manager::Task::Image_Loader::HDD_Hyperdrive',
+	camera     => 'Homyaki::Task_Manager::Task::Image_Loader::Camera',
+	hyperdrive => 'Homyaki::Task_Manager::Task::Image_Loader::Hyperdrive',
 };
 
 
