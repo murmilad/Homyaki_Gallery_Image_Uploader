@@ -36,7 +36,7 @@ sub start {
 	my $sources = {};
 	
 	foreach my $loader_name (@{&LOADERS_ORDER}) {
-		my $loader = Homyaki::Task_Manager::Task::Image_Loader::Loader_Factory->cteate_loader(
+		my $loader = Homyaki::Task_Manager::Task::Image_Loader::Loader_Factory->create_loader(
 			loader_name      => $loader_name,
 			progress_handler => sub {
 				my $current_percent = shift;
