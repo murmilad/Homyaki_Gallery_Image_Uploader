@@ -126,7 +126,6 @@ sub download {
 				$index++;
 				my $filename = $_;
 				copy($File::Find::name, "$directory/${index}_$filename");
-				print 'ph' . $self->{progress_handler};
 				if ($self->{progress_handler}){
 					$self->{progress_handler}(sprintf("%d", $index/$files_count*70));
 				}
