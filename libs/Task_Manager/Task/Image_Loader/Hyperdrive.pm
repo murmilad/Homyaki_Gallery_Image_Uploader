@@ -41,7 +41,7 @@ sub new {
 	my $result_dirs = [];
 
 	if (opendir(my $dh, $source_dir)){
-		my @source_dirs = grep { /^SOURCE_(\d+)/ && -d "$source_dir/$_" } readdir($dh);
+		my @source_dirs = grep { /^SPACE(\d+)/ && -d "$source_dir/$_" } readdir($dh);
     	closedir $dh;
 		foreach my $dir (@source_dirs) {
 
