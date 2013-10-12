@@ -5,6 +5,7 @@ use strict;
 use File::stat;
 use DateTime; 
 use Data::Dumper;
+use File::Find;
 
 use Homyaki::Task_Manager;
 use Homyaki::Task_Manager::DB::Task_Type;
@@ -85,10 +86,21 @@ sub start {
 
 		if ($loader) {
 			if ($loader->is_ready_for_load($params->{device})) {
+				my $source_files_count = $loader->get_source_files_count($params->{device}); 
 				$loader->download(
 					directory        => $directory_path,
 					source           => $params->{device},
 				);
+				my $files_count = 0;
+				find(sub{ -f and ( $files_count++ ) }, $directory_path);
+				if ($source_files_count != $files_count) {
+					return {
+						error  => 'Not all files was copied! ' . $source_files_count - $files_count . ' files was lost.',
+						result => {
+							params => $params,
+						}
+					};
+				}
 			} else {
 				return {
 					error  => $loader->get_errors(),

@@ -80,6 +80,16 @@ sub get_sources {
 	return \@sources;
 }
 
+sub get_source_files_count {
+	my $self   = shift;
+	my $source = shift;
+
+	my $files_count = `gphoto2 -L --port '$source' | tail -n 1 | awk '{print \$1}'`;
+	$files_count =~ s/\D//g;
+
+	return $files_count;
+}
+
 sub download {
 	my $self = shift;
 

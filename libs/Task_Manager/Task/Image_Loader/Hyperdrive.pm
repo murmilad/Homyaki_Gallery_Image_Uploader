@@ -106,6 +106,16 @@ sub get_sources {
 	return \@sources;
 }
 
+sub get_source_files_count {
+	my $self   = shift;
+	my $source = shift;
+
+	my $files_count;
+	find(sub{ -f and ( $files_count++ ) }, $source);
+
+	return $files_count;
+}
+
 sub download {
 	my $self = shift;
 
