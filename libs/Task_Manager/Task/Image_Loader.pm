@@ -4,6 +4,7 @@ use strict;
 
 use File::stat;
 use DateTime; 
+use Data::Dumper;
 
 use Homyaki::Task_Manager;
 use Homyaki::Task_Manager::DB::Task_Type;
@@ -20,7 +21,7 @@ use Homyaki::Gallery::Group_Processing;
 use Homyaki::Logger;
 
 use constant BASE_IMAGE_PATH      => '/home/alex/Share/Photo/';
-use constant GARMIN_GPX_PATH      => '/media/GARMIN/Garmin/GPX/';
+use constant GARMIN_GPX_PATH      => '/Garmin/GPX/';
 use constant DOWNLOAD_IMAGE_PATH  => &BASE_IMAGE_PATH . '/0New';
 
 sub start {
@@ -34,15 +35,20 @@ sub start {
 
 	my $loaders = [];
 	my $sources = {};
-	
+
+		
 	foreach my $loader_name (@{&LOADERS_ORDER}) {
+		my $progress_changed;
 		my $loader = Homyaki::Task_Manager::Task::Image_Loader::Loader_Factory->create_loader(
 			loader_name      => $loader_name,
 			progress_handler => sub {
 				my $current_percent = shift;
 
-				$task->set('progress', "uploading: $current_percent");
-				$task->update();
+				if ($progress_changed != $current_percent) {
+					$task->set('progress', $current_percent);
+					$task->update();
+					$progress_changed = $current_percent;
+				}
 			},
 		);
 		if ($loader) {
@@ -58,6 +64,8 @@ sub start {
 
 	my $directory_path;
 
+	Homyaki::Logger::print_log('load_dvice: ' . $params->{device});
+	Homyaki::Logger::print_log('load_dvice: ' . Dumper($sources));
 	if ($params->{device} &&  $sources->{$params->{device}}->{loader}) {
 	
 		my $index;
@@ -73,15 +81,21 @@ sub start {
 
 		mkdir($directory_path);
 		my $loader = $sources->{$params->{device}}->{loader};
+		Homyaki::Logger::print_log('loader: ' . Dumper($loader));
 
 		if ($loader) {
-			if ($loader->is_ready_for_load) {
+			if ($loader->is_ready_for_load($params->{device})) {
 				$loader->download(
 					directory        => $directory_path,
 					source           => $params->{device},
 				);
 			} else {
-				$params->{error} = $loader->get_errors();
+				return {
+					error  => $loader->get_errors(),
+					result => {
+						params => $params,
+					}
+				};
 			}
 		}
 	
@@ -91,11 +105,13 @@ sub start {
 
 	}
 
-	if (-d &GARMIN_GPX_PATH) {
-		Homyaki::GPS::Log::update_images(&GARMIN_GPX_PATH, $directory_path || &DOWNLOAD_IMAGE_PATH, $params->{time_shift});
+	for (my $i=0; $i <= 10; $i++){
+		if (-d "/media/usb$i" . &GARMIN_GPX_PATH) {
+			Homyaki::GPS::Log::update_images( "/media/usb$i" . &GARMIN_GPX_PATH, $directory_path || &DOWNLOAD_IMAGE_PATH, $params->{time_shift});
+		}
 	}
 
-	if ($params->{device} &&  $sources->{$params->{device}}->{loader}) {
+	if ($params->{device}) {
 
 		my @task_types = Homyaki::Task_Manager::DB::Task_Type->search(
 			handler => 'Homyaki::Task_Manager::Task::Auto_Rename'
@@ -113,6 +129,7 @@ sub start {
 	$result->{task} = {
 		params => $params,
 	};
+
 
 	return $result;
 }

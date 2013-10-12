@@ -117,9 +117,14 @@ sub get_tag {
 }
 
 sub is_garmin_connected {
-	my $gps_path = Homyaki::Task_Manager::Task::Image_Loader->GARMIN_GPX_PATH;
+	for (my $i=0; $i <= 10; $i++){
+		my $gps_path = "/media/usb$i" .  Homyaki::Task_Manager::Task::Image_Loader->GARMIN_GPX_PATH;
+		if (-d $gps_path) {
+			return 1;
+		}
+	}
 
-	return `sudo ls $gps_path` ? 1 : 0;
+	return 0;
 }
 
 sub get_already_active_tasks{
@@ -234,6 +239,8 @@ sub get_params {
 
 	my $sources = [];
 	foreach my $loader_name (@{&LOADERS_ORDER}) {
+
+		Homyaki::Logger::print_log('$loader_name ' . $loader_name);
 		my $loader = Homyaki::Task_Manager::Task::Image_Loader::Loader_Factory->create_loader(
 			loader_name      => $loader_name,
 		);

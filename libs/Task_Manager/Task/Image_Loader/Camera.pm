@@ -56,7 +56,7 @@ sub is_ready_for_load {
 	my $not_enough = $size + 500000 - $free_space;
 
 	if ($not_enough > 0) {
-		$self->{error} = "Not enough free space $not_enough Kb";
+		push(@{$self->{errors}}, "Not enough free space $not_enough Kb");
 		return 0;
 	} else {
 		return 1;
@@ -72,12 +72,12 @@ sub get_errors {
 sub get_sources {
 	my $self = shift;
 
-	my $sources = [];
+	my @sources;
 	if (scalar(@{$self->{ports}}) > 0){
-		$sources = map {{name => $_->{name}, source => $_->{port}, loader => &LOADER_NAME}} @{$self->{ports}};
+		@sources = map {{name => $_->{name}, source => $_->{port}, loader => &LOADER_NAME}} @{$self->{ports}};
 	}
 
-	return $sources;
+	return \@sources;
 }
 
 sub download {

@@ -6,8 +6,9 @@ use Exporter;
 use vars qw(@ISA @EXPORT $VERSION);
 
 use Data::Dumper;
+use Homyaki::Logger;
 
-use base 'Homyaki::Factory';
+use Homyaki::Factory;
 
 use constant LOADERS_ORDER => [
 	'hyperdrive',
@@ -40,9 +41,9 @@ sub create_loader{
 		};
 
 		eval {
-			$this->require_handler(&LOADER_HANDLER_MAP->{$loader_name});
+			Homyaki::Factory->require_handler(&LOADER_HANDLER_MAP->{$loader_name});
 		};
-
+		Homyaki::Logger::print_log('loader error:' . $@) if $@;
 		$loader = &LOADER_HANDLER_MAP->{$loader_name}->new(
 			params => $params,
 		) unless $@;
