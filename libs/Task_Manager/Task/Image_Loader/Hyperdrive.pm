@@ -20,6 +20,7 @@ use base 'Homyaki::Task_Manager::Task::Image_Loader::Abstract_Loader';
 
 use POSIX;
 use File::Find;
+use File::Copy;
 
 use strict;
 use warnings;
@@ -39,21 +40,21 @@ sub new {
 	my $source_dir = &SOURCE_PATH;
 	my $result_dirs = [];
 
-	if (opendir(my $dh, $source_dir)({
+	if (opendir(my $dh, $source_dir)){
 		my @source_dirs = grep { /^SOURCE_(\d+)/ && -d "$source_dir/$_" } readdir($dh);
     	closedir $dh;
-		foreach $dir (@source_dirs) {
+		foreach my $dir (@source_dirs) {
 
 			push(@{$result_dirs},{
 				source => $dir,
 				date   => POSIX::strftime("%d%m%y",localtime((stat $dir)[9])),
-				size   => $size,
 			});
 		}
+		$self->{sorces} = $result_dirs;
 	}
 
 	
-	return $result_dirs;  
+	return $self;  
 }
 
 sub is_ready_for_load {
@@ -87,7 +88,7 @@ sub get_sources {
 
 	my $sources = [];
 	if (scalar(@{$self->{ports}}) > 0){
-		$sources = map {{name => $_->{name}, source => $_->{port}, loader => &LOADER_NAME}} @{$self->{ports}};
+		$sources = map {{name => "$_->{source} ($_->{date})", source => $_->{source}, loader => &LOADER_NAME}} @{$self->{sources}};
 	}
 
 	return $sources;
@@ -100,34 +101,25 @@ sub download {
 
 	my $directory    = $h{directory};
 	my $source       = $h{source};
-	Homyaki::Logger::print_log("USBport: $source");	
+	Homyaki::Logger::print_log("Path: $source");	
 
-	if ($source =~ /^usb:((\d{3}),(\d{3}))?/){
-		my $bus    = $2 || '\d+';
-		my $device = $3 || '\d+';
-		my $processes = `lsof | grep /dev/bus/usb`;
-		foreach my $process_str (split("\n", $processes)){
-			if ($process_str =~ /[\w-]+\s+(\d+)\s+.*\/dev\/bus\/usb\/$bus\/$device/){
+	my $path = &SOURCE_PATH;
 
-				#gvfsd-gph 20535       alex    7r      CHR    189,147        0t0     261134 /dev/bus/usb/002/020
-				#lsof | grep usb
+	if (-d "$path/$source"){
+		my $files_count = 0;
+		find(sub{ -f and ( $files_count++ ) }, &SOURCE_PATH . '/' . $source);
 
-				Homyaki::Logger::print_log("sudo kill -9 $1");	
-				`sudo kill -9 $1`;
+		my $index = 0;
+		find(sub{
+			if (-f) {
+				$index++;
+				my $filename = $File::Find::name;
+				copy($_, "$directory/${index}_$filename");
+				if ($self->{progress_handler}){
+					$self->{progress_handler}(sprintf("%d", $index/$files_count*70));
+				}
 			}
-		}
-	}
-
-	my $files_count = `gphoto2 -L --port '$source' | tail -n 1 | awk '{print \$1}'`;
-	$files_count =~ s/\D//g;
-
-
-	for (my $i = 1; $i <= $files_count; $i++){
-		my $i_string = sprintf("%05d", $i);
-		`cd $directory; sudo gphoto2 --filename=${i_string}_\%f.\%C --get-file $i-$i --port '$source';`;
-		if ($self->{progress_handler}){
-			$self->{progress_handler}(sprintf("%d", $i/$files_count*70));
-		}
+		}, "$path/$source");
 	}
 
 	return 1;
