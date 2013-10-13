@@ -20,7 +20,8 @@ use base 'Homyaki::Task_Manager::Task::Image_Loader::Abstract_Loader';
 
 use strict;
 use warnings;
- 
+use File::Copy; 
+
 use Homyaki::System::USB;
 
 use constant LOADER_NAME => 'camera';
@@ -118,10 +119,26 @@ sub download {
 	my $files_count = `gphoto2 -L --port '$source' | tail -n 1 | awk '{print \$1}'`;
 	$files_count =~ s/\D//g;
 
-
+	my $double_hash = {};
 	for (my $i = 1; $i <= $files_count; $i++){
 		my $i_string = sprintf("%05d", $i);
 		`cd $directory; sudo gphoto2 --filename=${i_string}_\%f.\%C --get-file $i-$i --port '$source';`;
+		my $file_name = `cd $directory; ls ${i_string}*`;
+
+ 		$file_name =~ s/\n//g;
+
+		my $name = $file_name;
+		$name =~ s/\.\w+$//i;
+
+		if ($double_hash->{$name}) {
+			my $new_filename = $file_name;
+			$new_filename =~ s/^$i_string//;
+			move($directory . $file_name, $directory . $double_hash->{$name} . $new_filename)
+		} else {
+			$double_hash->{$name} = $i_string;
+		}
+
+		
 		if ($self->{progress_handler}){
 			$self->{progress_handler}(sprintf("%d", $i/$files_count*70));
 		}

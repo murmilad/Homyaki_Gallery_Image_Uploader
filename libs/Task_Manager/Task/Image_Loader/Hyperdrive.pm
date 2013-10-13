@@ -130,12 +130,23 @@ sub download {
 		my $files_count = 0;
 		find(sub{ -f and ( $files_count++ ) }, $source);
 
+		my $double_hash = {};
 		my $index = 0;
 		find(sub{
 			if (-f) {
 				$index++;
 				my $filename = $_;
-				copy($File::Find::name, "$directory/${index}_$filename");
+				my $name = $filename;
+				$name =~ s/\.\w+$//;
+
+				my $prefix;
+				if ($double_hash->{$name}) {
+					$prefix = $double_hash->{$name};
+				} else {
+					$prefix =  sprintf("%05d",$index);
+					$double_hash->{$name} = $prefix;
+				}
+				copy($File::Find::name, "$directory/${prefix}_$filename");
 				if ($self->{progress_handler}){
 					$self->{progress_handler}(sprintf("%d", $index/$files_count*70));
 				}
