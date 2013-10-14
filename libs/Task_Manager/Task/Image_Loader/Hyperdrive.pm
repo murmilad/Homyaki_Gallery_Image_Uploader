@@ -140,11 +140,14 @@ sub download {
 				$name =~ s/\.\w+$//;
 
 				my $prefix;
-				if ($double_hash->{$name}) {
-					$prefix = $double_hash->{$name};
+				if ($double_hash->{$name} && $double_hash->{$name}->{full_name} ne $filename) {
+					$prefix = $double_hash->{$name}->{index};
 				} else {
 					$prefix =  sprintf("%05d",$index);
-					$double_hash->{$name} = $prefix;
+					$double_hash->{$name} = {
+						index     => $prefix,
+						full_name => $filename,
+					};
 				}
 				copy($File::Find::name, "$directory/${prefix}_$filename");
 				if ($self->{progress_handler}){

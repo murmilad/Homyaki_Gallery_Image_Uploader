@@ -130,12 +130,15 @@ sub download {
 		my $name = $file_name;
 		$name =~ s/\.\w+$//i;
 
-		if ($double_hash->{$name}) {
+		if ($double_hash->{$name} && $double_hash->{$name}->{full_name} ne $file_name) {
 			my $new_filename = $file_name;
 			$new_filename =~ s/^$i_string//;
 			move($directory . $file_name, $directory . $double_hash->{$name} . $new_filename)
 		} else {
-			$double_hash->{$name} = $i_string;
+			$double_hash->{$name} = {
+				index     => $i_string,
+				full_name => $file_name,
+			};
 		}
 
 		
