@@ -87,15 +87,24 @@ sub start {
 		if ($loader) {
 			if ($loader->is_ready_for_load($params->{device})) {
 				my $source_files_count = $loader->get_source_files_count($params->{device}); 
-				$loader->download(
-					directory        => $directory_path,
-					source           => $params->{device},
-				);
-				my $files_count = 0;
-				find(sub{ -f and ( $files_count++ ) }, $directory_path);
-				if ($source_files_count != $files_count) {
+				if ($source_files_count && $source_files_count > 0) {
+					$loader->download(
+						directory        => $directory_path,
+						source           => $params->{device},
+					);
+					my $files_count = 0;
+					find(sub{ -f and ( $files_count++ ) }, $directory_path);
+					if ($source_files_count != $files_count) {
+						return {
+							error  => 'Not all files was copied! ' . $source_files_count - $files_count . ' files was lost.',
+							result => {
+								params => $params,
+							}
+						};
+					}
+				} else {
 					return {
-						error  => 'Not all files was copied! ' . $source_files_count - $files_count . ' files was lost.',
+						error  => 'Cant get files count!',
 						result => {
 							params => $params,
 						}
@@ -148,3 +157,4 @@ sub start {
 
 1;
 
+#Homyaki::GPS::Log::update_images( "/media/usb1" . &GARMIN_GPX_PATH, '/home/alex/Share/Photo/zzd_2013_Canarias_Autumn/2013_10_15__16_53_37_Canarias_1/', -4 * 60);

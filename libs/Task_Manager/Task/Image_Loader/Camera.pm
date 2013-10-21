@@ -49,7 +49,7 @@ sub is_ready_for_load {
 	my $port = shift;
 
 	my $sizes = `gphoto2 --list-files --port "$port" | awk '{print \$4}'`;
-	my $size; $size += $_ for split("\n", $sizes);
+	my $size; $size += $_ for grep { /^\d+$/}  split("\n", $sizes);
 	my $free_space = `df --block-size=1K /home/ | awk '{print \$4}' | tail -1`;
 
 	
@@ -85,10 +85,10 @@ sub get_source_files_count {
 	my $self   = shift;
 	my $source = shift;
 
-	my $files_count = `gphoto2 -L --port '$source' | tail -n 1 | awk '{print \$1}'`;
-	$files_count =~ s/\D//g;
+	my $sizes = `gphoto2 --list-files --port "$source" | awk '{print \$4}'`;
+	my $count; $count++ for grep { /^\d+$/} split("\n", $sizes);
 
-	return $files_count;
+	return $count;
 }
 
 sub download {
@@ -116,8 +116,7 @@ sub download {
 		}
 	}
 
-	my $files_count = `gphoto2 -L --port '$source' | tail -n 1 | awk '{print \$1}'`;
-	$files_count =~ s/\D//g;
+	my $files_count = $self->get_source_files_count($source);
 
 	my $double_hash = {};
 	for (my $i = 1; $i <= $files_count; $i++){

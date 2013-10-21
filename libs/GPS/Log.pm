@@ -214,7 +214,14 @@ sub set_gps_tag_to_jpeg {
 #		print Dumper($ImageInfo);
 
 		my $img_date = $ImageInfo->{DateTimeOriginal};
-		if ($img_date =~ /(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/) {
+		if (
+			$img_date =~ /(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/
+			&& !(
+				$ImageInfo->{CanonModelID} eq 'PowerShot D10'
+				&& $ImageInfo->{GPSLatitude}
+				&& $ImageInfo->{GPSLongitude}
+			)	
+		) {
 			my $time = DateTime->new(
 				year   => $1,
 				month  => $2,
@@ -371,6 +378,10 @@ sub update_exif_gps_data {
 
 1;
 __END__
+	my $exifTool    = new Image::ExifTool;
+	my $ImageInfo = $exifTool->ImageInfo('/home/alex/Share/Photo/zzd_2013_Canarias_Autumn/Canarias_2/acoll_0064867_00052_IMG_2971.JPG');
+	$exifTool->ExtractInfo('/home/alex/Share/Photo/zzd_2013_Canarias_Autumn/Canarias_2/acoll_0064867_00052_IMG_2971.JPG', $ImageInfo);
+	print Dumper($ImageInfo);
 
 my $command     = $ARGV[0];
 

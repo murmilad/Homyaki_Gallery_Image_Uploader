@@ -25,7 +25,7 @@ use base 'Homyaki::Interface::Task_Manager';
 
 use constant TASK_HANDLER => 'Homyaki::Task_Manager::Task::Image_Loader';
 use constant PARAMS_MAP  => {
-	time_shift   => {name => 'Time shift for GPS (sec)'            , required => 0, type  => &INPUT_TYPE_NUMBER},
+	time_shift   => {name => 'Time shift for GPS (sec)'            , required => 0, type  => &INPUT_TYPE_TEXT},
 	name         => {name => 'Name of photo directory'             , required => 0, type  => &INPUT_TYPE_TEXT},
 	device       => {name => 'Device'                              , required => 0, type  => &INPUT_TYPE_LIST},
 };
