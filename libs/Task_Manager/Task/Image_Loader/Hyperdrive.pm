@@ -76,7 +76,7 @@ sub is_ready_for_load {
 	$size = sprintf("%.02f",$size / 1024);
 
 	Homyaki::Logger::print_log('source size: ' . $size);
-	my $free_space = `df --block-size=1K /home/ | awk '{print \$4}' | tail -1`;
+	my $free_space = `df --block-size=1K /home/alex/Share/Photo/ | awk '{print \$4}' | tail -1`;
 
 	Homyaki::Logger::print_log('free_space: ' . $free_space);
 	my $not_enough = $size + 500000 - $free_space;

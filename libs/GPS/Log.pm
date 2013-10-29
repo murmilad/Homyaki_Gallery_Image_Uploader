@@ -217,9 +217,9 @@ sub set_gps_tag_to_jpeg {
 		if (
 			$img_date =~ /(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/
 			&& !(
-				$ImageInfo->{CanonModelID} eq 'PowerShot D10'
-				&& $ImageInfo->{GPSLatitude}
-				&& $ImageInfo->{GPSLongitude}
+				$ImageInfo->{Model} eq 'COOLPIX AW110'
+				&& $ImageInfo->{GPSLatitude} ne '0 deg 0\' 0.00" N' 
+				&& $ImageInfo->{GPSLongitude} ne '0 deg 0\' 0.00" E'
 			)	
 		) {
 			my $time = DateTime->new(

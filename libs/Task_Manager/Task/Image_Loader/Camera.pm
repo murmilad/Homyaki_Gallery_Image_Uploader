@@ -50,7 +50,7 @@ sub is_ready_for_load {
 
 	my $sizes = `gphoto2 --list-files --port "$port" | awk '{print \$4}'`;
 	my $size; $size += $_ for grep { /^\d+$/}  split("\n", $sizes);
-	my $free_space = `df --block-size=1K /home/ | awk '{print \$4}' | tail -1`;
+	my $free_space = `df --block-size=1K /home/alex/Share/Photo/ | awk '{print \$4}' | tail -1`;
 
 	
 
