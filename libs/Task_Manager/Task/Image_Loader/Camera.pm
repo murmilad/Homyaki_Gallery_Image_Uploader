@@ -127,19 +127,19 @@ sub download {
  		$file_name =~ s/\n//g;
 
 		my $name = $file_name;
-		$name =~ s/\.\w+$//i;
+		$name =~ s/$i_string([^\/]+)\.\w+$/$1/i;
 
 		if ($double_hash->{$name} && $double_hash->{$name}->{full_name} ne $file_name) {
 			my $new_filename = $file_name;
 			$new_filename =~ s/^$i_string//;
-			move($directory . $file_name, $directory . $double_hash->{$name} . $new_filename)
+
+			move("$directory/$file_name", $directory . '/' .  $double_hash->{$name}->{index} . $new_filename)
 		} else {
 			$double_hash->{$name} = {
 				index     => $i_string,
 				full_name => $file_name,
 			};
 		}
-
 		
 		if ($self->{progress_handler}){
 			$self->{progress_handler}(sprintf("%d", $i/$files_count*70));
