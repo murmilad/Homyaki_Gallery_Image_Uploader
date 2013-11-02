@@ -11,13 +11,17 @@ use Homyaki::Logger;
 use Homyaki::Factory;
 
 use constant LOADERS_ORDER => [
+	'usb_storage',
 	'hyperdrive',
+	'camera_sd',
 	'camera',
 ];
 
 use constant LOADER_HANDLER_MAP   => {
-	camera     => 'Homyaki::Task_Manager::Task::Image_Loader::Camera',
-	hyperdrive => 'Homyaki::Task_Manager::Task::Image_Loader::Hyperdrive',
+	camera      => 'Homyaki::Task_Manager::Task::Image_Loader::Camera',
+	usb_storage => 'Homyaki::Task_Manager::Task::Image_Loader::USB_Storage',
+	camera_sd   => 'Homyaki::Task_Manager::Task::Image_Loader::Camera_SD',
+	hyperdrive  => 'Homyaki::Task_Manager::Task::Image_Loader::Hyperdrive',
 };
 
 @ISA    = qw(Exporter);
