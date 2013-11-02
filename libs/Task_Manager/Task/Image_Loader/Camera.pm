@@ -44,12 +44,21 @@ sub new {
 	return $self;  
 }
 
-sub is_ready_for_load {
+sub get_source_files_size {
 	my $self = shift;
 	my $port = shift;
 
 	my $sizes = `gphoto2 --list-files --port "$port" | awk '{print \$4}'`;
 	my $size; $size += $_ for grep { /^\d+$/}  split("\n", $sizes);
+
+	return $size;
+}
+
+sub is_ready_for_load {
+	my $self = shift;
+	my $port = shift;
+
+	my $size = $self->get_source_files_size($port);
 	my $free_space = `df --block-size=1K /home/alex/Share/Photo/ | awk '{print \$4}' | tail -1`;
 
 	

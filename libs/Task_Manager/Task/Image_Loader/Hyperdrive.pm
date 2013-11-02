@@ -67,13 +67,21 @@ sub new {
 	return $self;  
 }
 
-sub is_ready_for_load {
+sub get_source_files_size {
 	my $self = shift;
 	my $port = shift;
 
 	my $size;
-	find(sub{ -f and ( $size += -s ) }, $port);
-	$size = sprintf("%.02f",$size / 1024);
+	find(sub{ -f and ( $size += sprintf("%d", (-s $_) / 1024) ) }, $port);
+
+	return $size;
+}
+
+sub is_ready_for_load {
+	my $self = shift;
+	my $port = shift;
+
+	my $size = $self->get_source_files_size($port);
 
 	Homyaki::Logger::print_log('source size: ' . $size);
 	my $free_space = `df --block-size=1K /home/alex/Share/Photo/ | awk '{print \$4}' | tail -1`;

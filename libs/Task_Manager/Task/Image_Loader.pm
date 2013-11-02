@@ -87,6 +87,7 @@ sub start {
 		if ($loader) {
 			if ($loader->is_ready_for_load($params->{device})) {
 				my $source_files_count = $loader->get_source_files_count($params->{device}); 
+				my $source_files_size  = $loader->get_source_files_size($params->{device}); 
 				if ($source_files_count && $source_files_count > 0) {
 					$loader->download(
 						directory        => $directory_path,
@@ -101,6 +102,18 @@ sub start {
 								params => $params,
 							}
 						};
+					} elsif ($source_files_size) {
+						my $sizes = `ls -kl $directory_path | awk '{print \$5}'`;
+						my $size; $size += $_ for grep { /^\d+$/}  split("\n", $sizes);
+						
+						if ($size < $source_files_size){
+							return {
+								error  => 'Not all files was correctly copied! ' . $source_files_size - $size . 'Kb was lost.',
+								result => {
+									params => $params,
+								}
+							};
+						}
 					}
 				} else {
 					return {
@@ -156,5 +169,17 @@ sub start {
 }
 
 1;
+__END__
+		my @task_types = Homyaki::Task_Manager::DB::Task_Type->search(
+			handler => 'Homyaki::Task_Manager::Task::Build_Cinema'
+		);
+
+		if (scalar(@task_types) > 0) {
+
+			my $task = Homyaki::Task_Manager->create_task(
+				task_type_id => $task_types[0]->id(),
+				modal        => 1,
+			);
+		}
 
 #Homyaki::GPS::Log::update_images( "/media/usb1" . &GARMIN_GPX_PATH, '/home/alex/Share/Photo/zzd_2013_Canarias_Autumn/2013_10_15__16_53_37_Canarias_1/', -4 * 60);
