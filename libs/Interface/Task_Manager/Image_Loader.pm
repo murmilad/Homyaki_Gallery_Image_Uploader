@@ -286,7 +286,7 @@ sub check_params {
 
         my $errors = {};
 
-	unless ($params->{name} =~ /^[_\w]+$/) {
+	unless ($params->{name} && $params->{name} =~ /^[_\w]+$/) {
 		$errors->{name}->{param_name} =  'Name of photo directory';
 		$errors->{name}->{errors}     =  ['Please enter correct directory name (for example Ducky_Party_2003)'];
 	}
