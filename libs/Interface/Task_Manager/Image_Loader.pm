@@ -30,7 +30,7 @@ use constant PARAMS_MAP  => {
 	device       => {name => 'Device'                              , required => 0, type  => &INPUT_TYPE_LIST},
 };
 
-sub get_tag {
+sub get_form {
 	my $self = shift;
 	my %h = @_;
 
@@ -38,22 +38,9 @@ sub get_tag {
 	my $errors = $h{errors};
 	my $user   = $h{user};
 
-	my $body_tag = $self->SUPER::get_tag(
-		params => $params,
-		errors => $errors,
-		user   => $user,
-		header => 'Upload new images to photo base',
-	);
+	my $body_tag = $self->SUPER::get_form(%h);
 
 	my $form = $body_tag->{body};
-
-	Homyaki::HTML->add_login_link(
-		user      => $user,
-		body      => $form,
-		interface => 'task',
-		auth      => 'auth',
-		params    => $params,
-	);
 
 	$form->add_form_element(
 		type   => &INPUT_TYPE_DIV,
@@ -104,14 +91,9 @@ sub get_tag {
 		);
 	}
 
-	my $tasks_form = $body_tag->{body}->add_form(
-		interface => $params->{interface},
- 		form_name => $params->{form},
- 		form_id   => 'tasks_form',
-	);
 
 	return {
-		root => $body_tag->{root},
+		root => $self,
 		body => $form,
 	};
 }
@@ -286,7 +268,7 @@ sub check_params {
 
         my $errors = {};
 
-	unless ($params->{name} && $params->{name} =~ /^[_\w]+$/) {
+	if ($params->{name} && $params->{name} !~ /^[_\w]+$/) {
 		$errors->{name}->{param_name} =  'Name of photo directory';
 		$errors->{name}->{errors}     =  ['Please enter correct directory name (for example Ducky_Party_2003)'];
 	}
