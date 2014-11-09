@@ -214,12 +214,13 @@ sub set_gps_tag_to_jpeg {
 #		print Dumper($ImageInfo);
 
 		my $img_date = $ImageInfo->{DateTimeOriginal};
+		Homyaki::Logger::print_log("GPS::Log file" .  $image_path);
 		if (
 			$img_date =~ /(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/
-			&& !(
-				$ImageInfo->{Model} eq 'COOLPIX AW110'
-				&& $ImageInfo->{GPSLatitude} ne '0 deg 0\' 0.00" N' 
-				&& $ImageInfo->{GPSLongitude} ne '0 deg 0\' 0.00" E'
+			&& (
+				$ImageInfo->{Model} ne 'COOLPIX AW110'
+				|| $ImageInfo->{GPSLatitude} eq '0 deg 0\' 0.00" N' 
+				|| $ImageInfo->{GPSLongitude} eq '0 deg 0\' 0.00" E'
 			)	
 		) {
 			my $time = DateTime->new(
@@ -232,8 +233,10 @@ sub set_gps_tag_to_jpeg {
 			);
 
 			my $gpx_image_data = $gpx_data->{$time->epoch()};
+			Homyaki::Logger::print_log("GPS::Log find data...");
 
 			if ($gpx_image_data) {
+				Homyaki::Logger::print_log("GPS::Log data" .  Dumper($gpx_image_data));
 				print Dumper($gpx_image_data);
 
 print $image_path  . " GPSLatitude: " . $ImageInfo->{GPSLatitude} . "\n";

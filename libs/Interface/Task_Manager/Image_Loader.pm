@@ -180,6 +180,8 @@ sub set_params {
 			);
 
 			$params->{task_id} = $task->id();
+			$params->{task_id_find} = $task->id();
+			
 		}
 	}
 

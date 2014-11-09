@@ -49,12 +49,19 @@ sub new {
 		my $source_dir = "/media/usb$i";
 		if (-d "$source_dir$source_path") {
 			if ($class->SOURCE_DIR_REGEXP eq 'root') {
-				push(@{$result_dirs},{
-					source => "$source_dir$source_path",
-					date   => POSIX::strftime("%d.%m.%y",localtime((stat "$source_dir$source_path")[9])),
-					name   => "($loader_name $i) *"
-				});
-				$self->{sources} = $result_dirs;
+				if (opendir(my $dh, "$source_dir$source_path")){
+					Homyaki::Logger::print_log('source_dir: ' . "$source_dir$source_path");
+					my @source_dirs = grep { $_ !~ /^\.$|^\.\.$/ } readdir($dh);
+					if (scalar(@source_dirs) > 0) {
+						push(@{$result_dirs},{
+							source => "$source_dir$source_path",
+							date   => POSIX::strftime("%d.%m.%y",localtime((stat "$source_dir$source_path")[9])),
+							name   => "($loader_name $i) *"
+						});
+					
+						$self->{sources} = $result_dirs;
+					}
+				}
 			} elsif (opendir(my $dh, "$source_dir$source_path")){
 				Homyaki::Logger::print_log('source_dir: ' . "$source_dir$source_path");
 				my @source_dirs = grep { /$source_dir_regexp/ && -d "$source_dir$source_path/$_" } readdir($dh);
